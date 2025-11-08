@@ -3,24 +3,36 @@ from typing import Dict, Any, List
 from schemas.schema import User, Basket, Item
 
 
-# A JSON fájl elérési útja
+# JSON data files path
 USERS_FILE = "data/users.json"
 DATA_FILE = "data/data.json"
 
 class DataManager:
-    def __init__(self, users_file_path, data_file_path ):
-        self.users_path = users_file_path
-        self.data_path = data_file_path
+    def __init__(self):
+        self.users_path = USERS_FILE
+        self.data_path = DATA_FILE
 
-    def load_json() -> Dict[str, Any]:
-        with open(JSON_FILE_PATH, "r", encoding="utf-8") as file:
-            pass
+    def load_json(self, path: str) -> Dict[str, Any]:
+        try:
+            with open(path, "r", encoding="utf-8") as file:
+                return json.load(path)
+        except FileNotFoundError:
+            if "users" in path:
+                return {"Users": []}
+            else:
+                return {"Baskets": []}
+        except:
+            return{}
 
-    def save_json(data: Dict[str, Any]) -> None:
-        pass
 
-    def add_user(user: Dict[str, Any]) -> None:
-        pass
+    def save_json(self, path: str, data: Dict[str, Any], ) -> None:
+        with open(path, "w", encoding="utf-8") as file:
+            json.dump(data, file, indent=4)
+
+    def add_user(self, user: Dict[str, Any]) -> None:
+        data = self.load_json(USERS_FILE)
+        data.update(user)
+        self.save_json(USERS_FILE,data=data)
 
     def add_basket(basket: Dict[str, Any]) -> None:
         pass
@@ -54,3 +66,7 @@ class DataManager:
 
     def delete_user(user_id) -> None:
         pass
+
+test = DataManager()
+
+test.add_user()
