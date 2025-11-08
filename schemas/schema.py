@@ -32,7 +32,7 @@ class Item(BaseModel):
     
     @field_validator("quantity")
     def check_quantity(cls, quantity):
-        if id < 0:
+        if quantity < 0:
             raise ValueError("Error: This is not a valid quantity!")
         return quantity
     

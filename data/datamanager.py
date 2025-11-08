@@ -33,11 +33,42 @@ class DataManager:
         data.setdefault("Users", []).append(user)
         self.save_json(path=USERS_FILE,data=data)
 
-    def add_basket(basket: Dict[str, Any]) -> None:
-        pass
+    #Change to user_id parameter, 
+    # #this way it is ensured that the data handling logic stays in DataManager.
+    #The empty new basket created here, since the endpoint only takes usierid.
+    def add_basket(self, user_id : int) -> None:
+        data = self.load_json(DATA_FILE)
+        baskets_list = data.get("Baskets", [])
 
-    def add_item_to_basket(user_id: int, item: Dict[str, Any]) -> None:
-        pass
+        current_basket_id = 0
+
+        for basket in baskets_list:
+            current_basket_id = basket.get("id")
+            
+        new_basket={
+            "id": current_basket_id+1,
+            "user_id": user_id,
+            "items" : []
+        }
+
+        data.setdefault("Baskets", []).append(new_basket)
+        self.save_json(path=DATA_FILE,data=data)
+
+    def add_item_to_basket(self, user_id: int, item: Dict[str, Any]) -> None:
+        data = self.load_json(DATA_FILE)
+        baskets_list = data.get("Baskets", [])
+        exists = False
+
+        for basket in baskets_list:
+            if basket.get("user_id") == user_id:
+                basket.setdefault("items", []).append(item)
+                exists = True
+                break
+        if exists:
+            self.save_json(DATA_FILE, data)
+        else:
+            raise ValueError(f"Nem létezik bevásárlókosár {user_id}-hoz!")
+
 
     def get_user_by_id(self, user_id: int) -> Dict[str, Any]:
         data = self.load_json(USERS_FILE)
@@ -48,15 +79,37 @@ class DataManager:
                 return user
         return None
 
-    def get_basket_by_user_id(user_id: int) -> List[Dict[str, Any]]:
-        pass
+    def get_basket_by_user_id(self, user_id: int) -> List[Dict[str, Any]]:
+        data = self.load_json(DATA_FILE)
+        baskets_list = data.get("Baskets", [])
+
+        for basket in baskets_list:
+            if basket.get("user_id") == user_id:
+                return basket
+        return None
 
     def get_all_users(self) -> List[Dict[str, Any]]:
         data = self.load_json(self.users_path)
         return data.get("Users", [])
 
-    def get_total_price_of_basket(user_id: int) -> float:
-        pass
+    def get_total_price_of_basket(self,user_id: int) -> float:
+        data = self.load_json(DATA_FILE)
+        baskets_list = data.get("Baskets", [])
+
+        total_price = 0.0
+        
+        for basket in baskets_list:
+            if basket.get("user_id") == user_id:
+                items_list = basket.get("items", [])
+                for item in items_list:
+                    price = item.get("price", 0)
+                    quantity = item.get("quantity", 0)
+                    total_price += price * quantity
+                
+            break
+
+        return total_price
+
 
     def update_item_in_basket(user_id, item_id, updated_item) -> None:
         pass

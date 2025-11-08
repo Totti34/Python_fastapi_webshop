@@ -27,7 +27,7 @@ def adduser(user: User) -> User:
         user_dictionary = user.model_dump()
         manage_data.add_user(user_dictionary)
         
-        return JSONResponse(content=user_dictionary, status_code=201)
+        return JSONResponse(content=user_dictionary, status_code=200)
     
     except Exception as e:
         raise HTTPException(
@@ -38,19 +38,33 @@ def adduser(user: User) -> User:
 
 @routers.post('/addshoppingbag')
 def addshoppingbag(userid: int) -> str:
-    pass
+    existing_basket = manage_data.get_basket_by_user_id(userid)
+    
+    if existing_basket is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User already has a basket"
+        )
+    
+    try:
+        manage_data.add_basket(userid) 
+        return JSONResponse(
+            content={"message": "Sikeres kosár hozzárendelés."}, 
+            status_code=201
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @routers.post('/additem', response_model=Basket)
 def additem(userid: int, item: Item) -> Basket:
-    pass
-
-@routers.put('/updateitem')
-def updateitem(userid: int, itemid: int, updateItem: Item) -> Basket:
-    pass
-
-@routers.delete('/deleteitem')
-def deleteitem(userid: int, itemid: int) -> Basket:
-    pass
+    item_dictionary = item.model_dump()
+    try:
+        manage_data.add_item_to_basket(userid, item_dictionary)
+        basket_dictionary = manage_data.get_basket_by_user_id(userid)
+        return JSONResponse(content=basket_dictionary, status_code=201)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @routers.get('/user')
 def user(userid: int) -> User:
@@ -63,8 +77,24 @@ def users() -> list[User]:
 
 @routers.get('/shoppingbag')
 def shoppingbag(userid: int) -> list[Item]:
-    pass
+    return manage_data.get_basket_by_user_id(userid)
 
 @routers.get('/getusertotal')
 def getusertotal(userid: int) -> float:
+    return manage_data.get_total_price_of_basket(userid)
+
+@routers.put('/updateitem')
+def updateitem(userid: int, itemid: int, updateItem: Item) -> Basket:
+    pass
+
+@routers.delete('/deleteitem')
+def deleteitem(userid: int, itemid: int) -> Basket:
+    pass
+
+@routers.delete('/deletall')
+def deleteall(userid: int) -> Basket:
+    pass
+
+@routers.delete('/deleteuser')
+def deleteuser(userid: int) -> Basket:
     pass
