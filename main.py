@@ -25,4 +25,3 @@ app.include_router(routes_router, tags=["Webshop Routes"])
 @app.get('/', tags=["Root"])
 def route():
     return {f'Welcome in {ShopName}'} 
-

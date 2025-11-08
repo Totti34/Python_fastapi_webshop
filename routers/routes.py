@@ -1,6 +1,7 @@
 from schemas.schema import User, Basket, Item
+from data.datamanager import DataManager
 from fastapi.responses import JSONResponse, RedirectResponse
-from fastapi import FastAPI, HTTPException, Request, Response, Cookie
+from fastapi import FastAPI, HTTPException, Request, Response, Cookie, status
 from fastapi import APIRouter
 
 '''
@@ -18,10 +19,22 @@ from fastapi import APIRouter
 '''
 
 routers = APIRouter()
+manage_data = DataManager()
 
 @routers.post('/adduser', response_model=User)
 def adduser(user: User) -> User:
-    pass
+    try:
+        user_dictionary = user.model_dump()
+        manage_data.add_user(user_dictionary)
+        
+        return JSONResponse(content=user_dictionary, status_code=201)
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Internal server error: {str(e)}"
+        )
+
 
 @routers.post('/addshoppingbag')
 def addshoppingbag(userid: int) -> str:
@@ -41,11 +54,12 @@ def deleteitem(userid: int, itemid: int) -> Basket:
 
 @routers.get('/user')
 def user(userid: int) -> User:
-    pass
+    return manage_data.get_user_by_id(userid)
 
 @routers.get('/users')
 def users() -> list[User]:
-    pass
+    user_data = manage_data.get_all_users()
+    return user_data
 
 @routers.get('/shoppingbag')
 def shoppingbag(userid: int) -> list[Item]:
@@ -54,6 +68,3 @@ def shoppingbag(userid: int) -> list[Item]:
 @routers.get('/getusertotal')
 def getusertotal(userid: int) -> float:
     pass
-
-
-

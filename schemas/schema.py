@@ -9,17 +9,11 @@ class User(BaseModel):
     id: int
     name: str
     email: EmailStr
-
-    @field_validator("email")
-    def check_email(cls, email):
-        if not isinstance(email, EmailStr):
-            return ValueError("Error: This is not a valid email format!")
-        return email
     
     @field_validator("id")
     def check_id(cls, id):
         if id < 0:
-            return ValueError("Error: This is not a valid id!")
+            raise ValueError("Error: This is not a valid id!")
         return id
 
 
@@ -33,13 +27,13 @@ class Item(BaseModel):
     @field_validator("item_id")
     def check_item_id(cls, item_id):
         if item_id < 0:
-            return ValueError("Error: This is not a valid item_id!")
+            raise ValueError("Error: This is not a valid item_id!")
         return item_id
     
     @field_validator("quantity")
     def check_quantity(cls, quantity):
         if id < 0:
-            return ValueError("Error: This is not a valid quantity!")
+            raise ValueError("Error: This is not a valid quantity!")
         return quantity
     
     @field_validator("price")
@@ -57,11 +51,11 @@ class Basket(BaseModel):
     @field_validator("id")
     def check_id(cls, id):
         if id < 0:
-            return ValueError("Error: This is not a valid id!")
+            raise ValueError("Error: This is not a valid id!")
         return id
     
     @field_validator("user_id")
     def check_user_id(cls, user_id):
         if user_id < 0:
-            return ValueError("Error: This is not a valid user_id!")
+            raise ValueError("Error: This is not a valid user_id!")
         return user_id
