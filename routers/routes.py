@@ -29,7 +29,7 @@ def adduser(user: User) -> User:
         return JSONResponse(content=user_dictionary, status_code=status.HTTP_201_CREATED)
     
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Internal server error: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 
@@ -45,7 +45,7 @@ def addshoppingbag(userid: int) -> str:
         return JSONResponse(content="Sikeres kosár hozzárendelés.", status_code=status.HTTP_201_CREATED)
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 
@@ -59,18 +59,32 @@ def additem(userid: int, item: Item) -> Basket:
         return JSONResponse(content=basket_dictionary, status_code=status.HTTP_201_CREATED)
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 
 @routers.get('/user')
 def user(userid: int) -> User:
-    return manage_data.get_user_by_id(userid)
+    try:
+        user = manage_data.get_user_by_id(userid)
+        if user is not None:
+            return JSONResponse(content=user, status_code=status.HTTP_200_OK)
+        else:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Nincs userid:{userid} rendelkező user!")
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=str(e))
+
+
 
 @routers.get('/users')
 def users() -> list[User]:
-    user_data = manage_data.get_all_users()
-    return user_data
+    try:
+        user_data = manage_data.get_all_users()
+        return JSONResponse(content=user_data, status_code=status.HTTP_200_OK)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=str(e))
+
+
 
 @routers.get('/shoppingbag')
 def shoppingbag(userid: int) -> list[Item]:
@@ -88,9 +102,10 @@ def shoppingbag(userid: int) -> list[Item]:
 @routers.get('/getusertotal')
 def getusertotal(userid: int) -> float:
     try:
-        return JSONResponse(content=manage_data.get_total_price_of_basket(userid), status_code=status.HTTP_200_OK)
+        content = manage_data.get_total_price_of_basket(userid)
+        return JSONResponse(content=content, status_code=status.HTTP_200_OK)
     except Exception as e:
-        raise HTTPException( status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        raise HTTPException( status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
 
 
@@ -130,5 +145,6 @@ def deleteuser(userid: int) -> str:
     try:
         manage_data.delete_user(userid)
         return JSONResponse(content=f"Felhasználó userid:{userid} sikeresen törölve", status_code=status.HTTP_202_ACCEPTED)
+    
     except ValueError as e:
-        raise HTTPException( status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail=str(e))
+        raise HTTPException( status_code=status.HTTP_409_CONFLICT, detail=str(e))
