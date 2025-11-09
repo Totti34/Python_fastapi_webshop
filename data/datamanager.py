@@ -161,7 +161,6 @@ class DataManager:
                         item_list.pop(i)
                         exists_item = True
                         break
-            break
 
         if exists_basket and exists_item:
             self.save_json(self.data_path, data)
