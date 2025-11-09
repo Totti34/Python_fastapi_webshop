@@ -6,8 +6,8 @@ Az alkalmazás architektúrája:
 
 3. **`data/datamanager.py`**: A központi adatkezelő osztály (`DataManager`). Ez a "Service" réteg felel minden fájlműveletért (JSON olvasás/írás) és az üzleti logikáért. Kommunikál a `users.json` és `data.json` fájlokkal.
 
-4. **`routers/routes.py`**: Az összes API végpont (`@routers.get`, `@routers.post` stb.) definíciója. [cite_start]Ez a "Controller" réteg, ami a HTTP kéréseket fogadja, meghívja a `DataManager` megfelelő metódusait, és `HTTPException` vagy `JSONResponse` segítségével válaszol a kliensnek.
+4. **`routers/routes.py`**: Az összes API végpont (`@routers.get`, `@routers.post` stb.) definíciója. Ez a "Controller" réteg, ami a HTTP kéréseket fogadja, meghívja a `DataManager` megfelelő metódusait, és `HTTPException` vagy `JSONResponse` segítségével válaszol a kliensnek.
 
 5. **`authentication/authentication.py`**: Az adminisztrátori token-ellenőrzést végző FastAPI függőséget (`verify_token`) tartalmazó modul
 
-6. **`.token`**: (Gitignore-ban kellene lennie) A titkos adminisztrátori tokent (egy egyszerű stringet) tartalmazó fájl.
+6. **`.token`**: A titkos adminisztrátori tokent (egy egyszerű stringet) tartalmazó fájl.
