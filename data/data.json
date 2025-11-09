@@ -3,15 +3,7 @@
         {
             "id": 101,
             "user_id": 1,
-            "items": [
-                {
-                    "item_id": 123,
-                    "name": "newer_item",
-                    "brand": "some",
-                    "price": 12.9,
-                    "quantity": 3
-                }
-            ]
+            "items": []
         },
         {
             "id": 102,

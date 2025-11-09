@@ -2,6 +2,32 @@ import json
 from typing import Dict, Any, List
 from schemas.schema import User, Basket, Item
 
+
+
+"""
+A jelenlegi fájl tartalmazza a 'DataManager' osztályt, amely az alkalmazás 
+teljes adatkezelési és üzleti logikájáért felelős.
+
+Ez az osztály egy 'Service' rétegként működik, amely elválasztja a végpontok
+ logikáját (routes.py) a nyers fájlkezeléstől (users.json és data.json).
+
+A metódusok két fő csoportra oszthatók:
+1.  **Lekérdező ('Getter') metódusok** (pl. get_user_by_id, get_all_users):
+    Ezek a függvények 'None'-nal térnek vissza, ha egy kért adat (pl. egy
+    adott kosár) nem létezik. Ez egy várt, nem-kivételes esemény.
+
+2.  **Író ('Writer') metódusok** (pl. add_item_to_basket, delete_user):
+    Ezek a függvények 'ValueError'-t dobnak, ha egy üzleti szabály 
+    (pl. "a kosár nem üres", "nem létező kosár") megsérül.
+
+Ezáltal biztosított, hogy a 'routes.py' végpontjai egységesen tudják
+kezelni az adatréteg válaszait, és a 'None' vagy 'ValueError' 
+eredményeket alakítják át a kliens számára érthető 'HTTPException'-né
+(pl. 404 Not Found vagy 409 Conflict).
+"""
+
+
+
 # JSON data files path
 USERS_FILE = "data/users.json"
 DATA_FILE = "data/data.json"
@@ -28,14 +54,23 @@ class DataManager:
 
     def add_user(self, user: Dict[str, Any]) -> None:
         data = self.load_json(self.users_path)
-        data.setdefault("Users", []).append(user)
+        users_list = data.get("Users", [])
+        new_user_id = user.get("id")
+
+        for existing_user in users_list:
+            if existing_user.get("id") == new_user_id:
+                raise ValueError(f"Felhasználó userid:{new_user_id} már létezik!")
+                break
+        
+        users_list.append(user)
+        data["Users"] = users_list
+
         self.save_json(path=self.users_path,data=data)
 
 
 
-    #Change to user_id parameter, 
-    # #this way it is ensured that the data handling logic stays in DataManager.
-    #The empty new basket created here, since the endpoint only takes usierid.
+    #A paraméter itt megváltoztatásea került user_id-re. Ezzel lehetett csak biztosítani,
+    #hogy az adatkezelés osztályon belül marad, és nem a routes.py-ban lévő endpoint végzi el.
     def add_basket(self, user_id : int) -> None:
         data = self.load_json(self.data_path)
         baskets_list = data.get("Baskets", [])
@@ -76,7 +111,7 @@ class DataManager:
         if exists:
             self.save_json(self.data_path, data)
         else:
-            raise ValueError(f"Nem létezik bevásárlókosár {user_id}-hoz!")
+            raise ValueError(f"Nem tartozik bevásárlókosár {user_id}-hoz!")
 
 
 
@@ -167,7 +202,7 @@ class DataManager:
         elif exists_basket:
             raise ValueError(f"Nem lehet törölni, mivel nem létezik itemid:{item_id} tétel userid:{user_id} bevásárlókosarában!")
         else:
-             raise ValueError(f"Nem tartozik bevásárlókosár userid:{user_id}-hoz!")
+             raise ValueError(f"Nem tartozik bevásárlókosár userid:{user_id}-hoz, vagy nincs is ilyen felhasználó!")
         
 
 
@@ -185,7 +220,7 @@ class DataManager:
         if exists_basket:
             self.save_json(self.data_path, data)
         else:
-             raise ValueError(f"Nem tartozik bevásárlókosár userid:{user_id}-hoz!")
+             raise ValueError(f"Nem tartozik bevásárlókosár userid:{user_id}-hoz, vagy nincs is ilyen felhasználó!")
 
 
 

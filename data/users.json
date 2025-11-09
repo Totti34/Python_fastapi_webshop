@@ -19,6 +19,11 @@
             "id": 8,
             "name": "new_user",
             "email": "user@example.com"
+        },
+        {
+            "id": 9,
+            "name": "string",
+            "email": "user@example.com"
         }
     ]
 }
