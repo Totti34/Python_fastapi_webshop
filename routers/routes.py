@@ -5,11 +5,25 @@ from fastapi import FastAPI, HTTPException, Request, Response, Cookie, status, D
 from authentication.authentication import verify_token
 
 '''
-A jelenlegi fájl tartalmazza a feladathoz szükséges végpontokat.
-Minden végpont try-except blokk-ból épül fel, ezáltal biztosított, 
-hogy bármilyen váratlan hiba esetén továbbra is működőképes marad a program.
-Néhány végponton, ahol volt értelme, implementálásra került extra HTTPException dobás.
+Ez a modul definiálja az alkalmazás összes API végpontját (Controller réteg).
+
+Feladata, hogy fogadja a bejövő HTTP kéréseket, és összekösse azokat a 
+megfelelőjő üzleti logikával.
+
+A végpontok:
+1.  Fogadják a kéréseket, és (ahol szükséges) validálják a bemeneti adatokat
+    a 'schemas.schema' modulban definiált Pydantic modellek segítségével.
+2.  Használják a 'data.datamanager.DataManager' osztályt ('manage_data') 
+    az adatkezelési műveletek (olvasás/írás) elvégzésére.
+3.  Védik az adminisztrátori funkciókat az 'authentication.authentication'
+    modulból importált 'verify_token' FastAPI függőséggel.
+4.  Kezelik a hibákat: A 'DataManager' által dobott 'ValueError' (üzleti 
+    logikai) hibákat elkapják és 'HTTPException'-né alakítják (pl. 404, 409).
+    Minden egyéb váratlan hibát 500-as (Internal Server Error) hibaként kezelnek.
+5.  Válaszolnak a kliensnek a feladatkiírásnak megfelelő 'JSONResponse' 
+    objektumokkal és HTTP státuszkódokkal.
 '''
+
 ###-------------------------------------------------ADMIN endpoints-------------------------------------------------###
 
 routers = APIRouter()
@@ -49,6 +63,10 @@ def user(userid: int) -> User:
             return JSONResponse(content=user, status_code=status.HTTP_200_OK)
         else:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Nincs userid:{userid} rendelkező user!")
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=str(e))
 
@@ -84,7 +102,10 @@ def addshoppingbag(userid: int) -> str:
         
         manage_data.add_basket(userid) 
         return JSONResponse(content="Sikeres kosár hozzárendelés.", status_code=status.HTTP_201_CREATED)
-        
+ 
+    except HTTPException as http_exc:
+        raise http_exc
+
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
@@ -151,6 +172,9 @@ def additem(userid: int, item: Item) -> Basket:
         basket_dictionary = manage_data.get_basket_by_user_id(userid)
         return JSONResponse(content=basket_dictionary, status_code=status.HTTP_201_CREATED)
     
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
@@ -170,6 +194,9 @@ def shoppingbag(userid: int) -> list[Item]:
         else:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Nem tartozik kosár userid:{userid}-hez, vagy nincs is ilyen felhasználó!")
         
+    except HTTPException as http_exc:
+        raise http_exc
+
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=str(e))
         

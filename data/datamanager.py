@@ -12,11 +12,11 @@ Ez az osztály egy 'Service' rétegként működik, amely elválasztja a végpon
  logikáját (routes.py) a nyers fájlkezeléstől (users.json és data.json).
 
 A metódusok két fő csoportra oszthatók:
-1.  **Lekérdező ('Getter') metódusok** (pl. get_user_by_id, get_all_users):
+1.  Lekérdező ('Getter') metódusok (pl. get_user_by_id, get_all_users):
     Ezek a függvények 'None'-nal térnek vissza, ha egy kért adat (pl. egy
     adott kosár) nem létezik. Ez egy várt, nem-kivételes esemény.
 
-2.  **Író ('Writer') metódusok** (pl. add_item_to_basket, delete_user):
+2.  Író ('Writer') metódusok (pl. add_item_to_basket, delete_user):
     Ezek a függvények 'ValueError'-t dobnak, ha egy üzleti szabály 
     (pl. "a kosár nem üres", "nem létező kosár") megsérül.
 
@@ -99,6 +99,11 @@ class DataManager:
 
 
     def add_item_to_basket(self, user_id: int, item: Dict[str, Any]) -> None:
+
+        user = self.get_user_by_id(user_id) 
+        if user is None:
+            raise ValueError(f"Nem létezik felhasználó ezzel az azonosítóval: {user_id}")
+
         data = self.load_json(self.data_path)
         baskets_list = data.get("Baskets", [])
         exists = False
@@ -175,9 +180,9 @@ class DataManager:
         if exists_basket and exists_item:
             self.save_json(self.data_path, data)
         elif exists_basket:
-            raise ValueError(f"Nem létezik {item_id} tétel {user_id} bevásárlókosarában!")
+            raise ValueError(f"Nem létezik itemid: {item_id} tétel userid: {user_id} bevásárlókosarában!")
         else:
-             raise ValueError(f"Nem létezik bevásárlókosár {user_id}-hoz!")
+             raise ValueError(f"Nem létezik bevásárlókosár userid: {user_id}-hoz!")
 
 
 
