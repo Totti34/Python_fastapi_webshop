@@ -26,45 +26,42 @@ def adduser(user: User) -> User:
     try:
         user_dictionary = user.model_dump()
         manage_data.add_user(user_dictionary)
-        
-        return JSONResponse(content=user_dictionary, status_code=200)
+        return JSONResponse(content=user_dictionary, status_code=status.HTTP_201_CREATED)
     
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-            detail=f"Internal server error: {str(e)}"
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Internal server error: {str(e)}")
+
 
 
 @routers.post('/addshoppingbag')
 def addshoppingbag(userid: int) -> str:
     existing_basket = manage_data.get_basket_by_user_id(userid)
-    
+
     if existing_basket is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="User already has a basket"
-        )
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail=f"userid: {userid} már rendelkezik kosárral!")
     
     try:
         manage_data.add_basket(userid) 
-        return JSONResponse(
-            content={"message": "Sikeres kosár hozzárendelés."}, 
-            status_code=201
-        )
+        return JSONResponse(content="Sikeres kosár hozzárendelés.", status_code=status.HTTP_201_CREATED)
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+
 @routers.post('/additem', response_model=Basket)
 def additem(userid: int, item: Item) -> Basket:
     item_dictionary = item.model_dump()
+
     try:
         manage_data.add_item_to_basket(userid, item_dictionary)
         basket_dictionary = manage_data.get_basket_by_user_id(userid)
-        return JSONResponse(content=basket_dictionary, status_code=201)
+        return JSONResponse(content=basket_dictionary, status_code=status.HTTP_201_CREATED)
+    
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
 
 @routers.get('/user')
 def user(userid: int) -> User:
@@ -77,24 +74,61 @@ def users() -> list[User]:
 
 @routers.get('/shoppingbag')
 def shoppingbag(userid: int) -> list[Item]:
-    return manage_data.get_basket_by_user_id(userid)
+    try:
+        content = manage_data.get_basket_by_user_id(userid)
+        if content is not None:
+            return JSONResponse(content= content, status_code=status.HTTP_200_OK)
+        else:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Nem tartozik kosár userid:{userid}-hez!")
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail=str(e))
+        
+
 
 @routers.get('/getusertotal')
 def getusertotal(userid: int) -> float:
-    return manage_data.get_total_price_of_basket(userid)
+    try:
+        return JSONResponse(content=manage_data.get_total_price_of_basket(userid), status_code=status.HTTP_200_OK)
+    except Exception as e:
+        raise HTTPException( status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    
+
 
 @routers.put('/updateitem')
 def updateitem(userid: int, itemid: int, updateItem: Item) -> Basket:
-    pass
+    try:
+        item_dictionary = updateItem.model_dump()
+        manage_data.update_item_in_basket(userid, itemid, item_dictionary)
+        return JSONResponse(content=manage_data.get_basket_by_user_id(userid), status_code=201)
+    except ValueError as e:
+        raise HTTPException( status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
 
 @routers.delete('/deleteitem')
 def deleteitem(userid: int, itemid: int) -> Basket:
-    pass
+    try:
+        manage_data.delete_item_from_basket(userid, itemid)
+        return JSONResponse(content=manage_data.get_basket_by_user_id(userid), status_code=201)
+    except ValueError as e:
+        raise HTTPException( status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
 
 @routers.delete('/deletall')
 def deleteall(userid: int) -> Basket:
-    pass
+    try:
+        manage_data.clear_basket(userid)
+        return JSONResponse(content=manage_data.get_basket_by_user_id(userid), status_code=201)
+    except ValueError as e:
+        raise HTTPException( status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
 
 @routers.delete('/deleteuser')
-def deleteuser(userid: int) -> Basket:
-    pass
+def deleteuser(userid: int) -> str:
+    try:
+        manage_data.delete_user(userid)
+        return JSONResponse(content=f"Felhasználó userid:{userid} sikeresen törölve", status_code=status.HTTP_202_ACCEPTED)
+    except ValueError as e:
+        raise HTTPException( status_code=status.HTTP_405_METHOD_NOT_ALLOWED, detail=str(e))

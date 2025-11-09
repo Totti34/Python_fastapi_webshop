@@ -3,22 +3,7 @@
         {
             "id": 101,
             "user_id": 1,
-            "items": [
-                {
-                    "item_id": 201,
-                    "name": "Alma",
-                    "brand": "Jonatán",
-                    "price": 9.99,
-                    "quantity": 2
-                },
-                {
-                    "item_id": 202,
-                    "name": "Körte",
-                    "brand": "Vilmos",
-                    "price": 12.49,
-                    "quantity": 1
-                }
-            ]
+            "items": []
         },
         {
             "id": 102,

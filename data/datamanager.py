@@ -15,13 +15,11 @@ class DataManager:
         try:
             with open(path, "r", encoding="utf-8") as file:
                 return json.load(file)
-        except FileNotFoundError:
+        except:
             if "users" in path:
                 return {"Users": []}
             else:
                 return {"Baskets": []}
-        except:
-            return {}
 
 
     def save_json(self, path: str, data: Dict[str, Any], ) -> None:
@@ -32,6 +30,8 @@ class DataManager:
         data = self.load_json(USERS_FILE)
         data.setdefault("Users", []).append(user)
         self.save_json(path=USERS_FILE,data=data)
+
+
 
     #Change to user_id parameter, 
     # #this way it is ensured that the data handling logic stays in DataManager.
@@ -54,6 +54,8 @@ class DataManager:
         data.setdefault("Baskets", []).append(new_basket)
         self.save_json(path=DATA_FILE,data=data)
 
+
+
     def add_item_to_basket(self, user_id: int, item: Dict[str, Any]) -> None:
         data = self.load_json(DATA_FILE)
         baskets_list = data.get("Baskets", [])
@@ -70,6 +72,7 @@ class DataManager:
             raise ValueError(f"Nem létezik bevásárlókosár {user_id}-hoz!")
 
 
+
     def get_user_by_id(self, user_id: int) -> Dict[str, Any]:
         data = self.load_json(USERS_FILE)
         users_list = data.get("Users", [])
@@ -79,49 +82,122 @@ class DataManager:
                 return user
         return None
 
+
+
     def get_basket_by_user_id(self, user_id: int) -> List[Dict[str, Any]]:
         data = self.load_json(DATA_FILE)
         baskets_list = data.get("Baskets", [])
 
         for basket in baskets_list:
             if basket.get("user_id") == user_id:
-                return basket
+                return basket.get("items", [])
         return None
+
+
 
     def get_all_users(self) -> List[Dict[str, Any]]:
         data = self.load_json(self.users_path)
         return data.get("Users", [])
 
+
+
     def get_total_price_of_basket(self,user_id: int) -> float:
+        total_price = 0.0
+        basket = self.get_basket_by_user_id(user_id)
+
+        if basket:
+            for item in basket:
+                price = item.get("price", 0)
+                quantity = item.get("quantity", 0)
+                total_price += price * quantity
+                break
+            return total_price
+        
+        else:
+            raise ValueError(f"Nem tartozik kosár userid:{user_id}-hoz")
+        
+
+
+    def update_item_in_basket(self, user_id: int, item_id: int, updated_item: Dict[str, Any]) -> None:
         data = self.load_json(DATA_FILE)
         baskets_list = data.get("Baskets", [])
+        exists_basket = False
+        exists_item = False
 
-        total_price = 0.0
-        
         for basket in baskets_list:
             if basket.get("user_id") == user_id:
-                items_list = basket.get("items", [])
-                for item in items_list:
-                    price = item.get("price", 0)
-                    quantity = item.get("quantity", 0)
-                    total_price += price * quantity
-                
+                item_list = basket.get("items", [])
+                exists_basket = True
+                for item in item_list:
+                    if item.get("item_id") == item_id:
+                        item.update(updated_item)
+                        exists_item = True
+                        break
+        
+        if exists_basket and exists_item:
+            self.save_json(DATA_FILE, data)
+        elif exists_basket:
+            raise ValueError(f"Nem létezik {item_id} tétel {user_id} bevásárlókosarában!")
+        else:
+             raise ValueError(f"Nem létezik bevásárlókosár {user_id}-hoz!")
+
+
+
+    def delete_item_from_basket(self, user_id, item_id) -> None:
+        data = self.load_json(DATA_FILE)
+        baskets_list = data.get("Baskets", [])
+        exists_basket = False
+        exists_item = False
+
+        for basket in baskets_list:
+            if basket.get("user_id") == user_id:
+                item_list = basket.get("items", [])
+                exists_basket = True
+                for i, item in enumerate(item_list):
+                    if item.get("item_id") == item_id:
+                        item_list.pop(i)
+                        exists_item = True
+                        break
             break
 
-        return total_price
+        if exists_basket and exists_item:
+            self.save_json(DATA_FILE, data)
+        elif exists_basket:
+            raise ValueError(f"Nem lehet törölni, mivel nem létezik itemid:{item_id} tétel userid:{user_id} bevásárlókosarában!")
+        else:
+             raise ValueError(f"Nem tartozik bevásárlókosár userid:{user_id}-hoz!")
+        
 
 
-    def update_item_in_basket(user_id, item_id, updated_item) -> None:
-        pass
+    def clear_basket(self, user_id) -> None:
+        data = self.load_json(DATA_FILE)
+        baskets_list = data.get("Baskets", [])
+        exists_basket = False
 
-    def delete_item_from_basket(user_id, item_id) -> None:
-        pass
+        for basket in baskets_list:
+            if basket.get("user_id") == user_id:
+                basket["items"] = []
+                exists_basket = True
+                break
 
-    def clear_basket(user_id) -> None:
-        pass
+        if exists_basket:
+            self.save_json(DATA_FILE, data)
+        else:
+             raise ValueError(f"Nem tartozik bevásárlókosár userid:{user_id}-hoz!")
 
-    def is_basket_empty(user_id) -> bool:
-        pass
 
-    def delete_user(user_id) -> None:
-        pass
+
+    def delete_user(self,user_id) -> None:
+        user_basket = self.get_basket_by_user_id(user_id)
+
+        if not user_basket:
+            data = self.load_json(self.users_path)
+            users_list = data.get("Users", []) 
+            for i, user in enumerate(users_list):
+                if user.get("id") == user_id:
+                    users_list.pop(i)
+                    self.save_json(USERS_FILE, data=data)
+                    break
+        
+        else:
+            raise ValueError("A kosár nem üres, a felhasználó nem törölhető.")
